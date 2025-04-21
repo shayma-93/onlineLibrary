@@ -1,5 +1,5 @@
 import connectToDatabase from "../../db.js";
-import { AppError } from "../appError.js";
+import { createError } from "../Errors/appError.js";
 
 class ReadingHistoryRepository {
     // Create a new reading history
@@ -24,7 +24,7 @@ class ReadingHistoryRepository {
             return { id: result.insertId, ...entry };
         } catch (error) {
             console.error("Error in ReadingHistoryRepository.create:", error.message);
-            throw new AppError("Failed to create reading history. Please check the input data.", 500);
+            throw new createError("Failed to create reading history. Please check the input data.", 500);
         }
     }
 
@@ -37,7 +37,7 @@ class ReadingHistoryRepository {
             return rows || [];
         } catch (error) {
             console.error("Error in ReadingHistoryRepository.findAll:", error.message);
-            throw new AppError("Failed to fetch reading histories. Please try again later.", 500);
+            throw new createError("Failed to fetch reading histories. Please try again later.", 500);
         }
     }
 
@@ -53,7 +53,7 @@ class ReadingHistoryRepository {
             return rows[0];
         } catch (error) {
             console.error("Error in ReadingHistoryRepository.findById:", error.message);
-            throw new AppError("Failed to fetch reading history by ID. Please try again later.", 500);
+            throw new createError("Failed to fetch reading history by ID. Please try again later.", 500);
         }
     }
 
@@ -87,7 +87,7 @@ class ReadingHistoryRepository {
             }
         } catch (error) {
             console.error("Error in ReadingHistoryRepository.update:", error.message);
-            throw new AppError("Failed to update reading history. Please try again later.", 500);
+            throw new createError("Failed to update reading history. Please try again later.", 500);
         }
     }
     
@@ -100,7 +100,7 @@ class ReadingHistoryRepository {
             return result.affectedRows > 0; // Return true if the delete was successful
         } catch (error) {
             console.error("Error in ReadingHistoryRepository.delete:", error.message);
-            throw new AppError("Failed to delete reading history. Please try again later.", 500);
+            throw new createError("Failed to delete reading history. Please try again later.", 500);
         }
     }
 }

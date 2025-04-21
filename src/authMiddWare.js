@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { UnauthorizedError } from "./appError.js"
+import { unauthorizedError } from "./Errors/appError.js"
 
 const JWT_SECRET = "my_secret_key_12345";
 
@@ -8,7 +8,7 @@ const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new UnauthorizedError("Missing or invalid token");
+    throw new unauthorizedError("Missing or invalid token");
   }
 
   const token = authHeader.split(" ")[1];
@@ -18,7 +18,7 @@ const authMiddleware = (req, res, next) => {
     next();
   } catch (error) {
     console.error("JWT verification error:", error);
-    throw new UnauthorizedError("Invalid or expired token");
+    throw new unauthorizedError("Invalid or expired token");
   }
 };
 

@@ -1,5 +1,5 @@
 import bookShelvesService from "../services/bookShelves.service.js";
-import { NotFoundError, ForbiddenError } from "../appError.js";  
+import { notFoundError, forbiddenError } from "../Errors/appError.js";  
 
 class BookShelvesController {
     async createBookShelf(req, res) {
