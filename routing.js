@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
 import booksRoutes from "./src/routes/books.route.js";
 import usersRoutes from "./src/routes/users.route.js";
 import bookShelvesRoutes from "./src/routes/bookShelves.route.js";

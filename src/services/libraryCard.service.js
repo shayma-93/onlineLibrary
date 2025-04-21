@@ -1,5 +1,5 @@
 import libraryCardRepository from "../repositories/libraryCard.repository.js";
-import { NotFoundError, ForbiddenError, UnauthorizedError } from "../appError.js";
+import { notFoundError, forbiddenError, unauthorizedError } from "../Errors/appError.js";
 
 class LibraryCardService {
     async createLibraryCard(libraryCardData, user) {
@@ -28,7 +28,7 @@ class LibraryCardService {
         try {
             const card = await libraryCardRepository.findById(id);
             if (!card) {
-                throw new NotFoundError("Library card not found");
+                throw new notFoundError("Library card not found");
             }
             return card;
         } catch (error) {
@@ -41,7 +41,7 @@ class LibraryCardService {
         try {
             const card = await libraryCardRepository.findById(id);
             if (!card) {
-                throw new NotFoundError("Library card not found");
+                throw new notFoundError("Library card not found");
             }
 
             //if (user.role !== 'admin' && card.user_id !== user.id) {
@@ -64,7 +64,7 @@ class LibraryCardService {
         try {
             const card = await libraryCardRepository.findById(id);
             if (!card) {
-                throw new NotFoundError("Library card not found");
+                throw new notFoundError("Library card not found");
             }
 
            // if (user.role !== 'admin' && card.user_id !== user.id) {

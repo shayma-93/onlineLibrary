@@ -25,7 +25,15 @@ class UsersRepository {
         const [rows] = await db.execute("SELECT * FROM users");
         return rows;
     }
-
+    
+    async findByEmail(email) {
+        const [rows] = await pool.query(
+          "SELECT id, email, password_hash, username, role FROM users WHERE email = ?",
+          [email]
+        );
+        return rows[0]; 
+      }
+      
     async findById(id) {
         const db = await connectToDatabase();
         const [rows] = await db.execute("SELECT * FROM users WHERE id = ?", [id]);

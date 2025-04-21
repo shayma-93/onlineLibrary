@@ -1,5 +1,5 @@
 import bookShelvesRepository from "../repositories/bookShelves.repository.js";
-import { NotFoundError, ForbiddenError, UnauthorizedError } from "../appError.js";
+import { notFoundError, forbiddenError, unauthorizedError } from "../Errors/appError.js";
 
 class BookShelvesService {
     async createBookShelves(bookShelvesData, user) {
@@ -27,7 +27,7 @@ class BookShelvesService {
         try {
             const shelf = await bookShelvesRepository.findById(id);
             if (!shelf) {
-                throw new NotFoundError("Bookshelf not found");
+                throw new notFoundError("Bookshelf not found");
             }
             return shelf;
         } catch (error) {
@@ -43,7 +43,7 @@ class BookShelvesService {
     
             const shelf = await bookShelvesRepository.findById(id);
             if (!shelf) {
-                throw new NotFoundError("Bookshelf not found");
+                throw new notFoundError("Bookshelf not found");
             }
     
             // Optional capitalization
@@ -70,7 +70,7 @@ class BookShelvesService {
         try {
             const shelf = await bookShelvesRepository.findById(id);
             if (!shelf) {
-                throw new NotFoundError("Bookshelf not found");
+                throw new notFoundError("Bookshelf not found");
             }
             return await bookShelvesRepository.delete(id);
         } catch (error) {

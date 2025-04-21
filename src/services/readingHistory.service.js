@@ -1,5 +1,5 @@
 import readingHistoryRepository from "../repositories/readingHistory.repository.js";
-import { NotFoundError, ForbiddenError, UnauthorizedError } from "../appError.js";
+import { notFoundError, forbiddenError, unauthorizedError } from "../Errors/appError.js";
 
 class ReadingHistoryService {
     async createReadingHistory(data, user) {
@@ -31,7 +31,7 @@ class ReadingHistoryService {
         try {
             const history = await readingHistoryRepository.findById(id);
             if (!history) {
-                throw new NotFoundError("Reading history not found.");
+                throw new notFoundError("Reading history not found.");
             }
             return history;
         } catch (error) {
@@ -44,7 +44,7 @@ class ReadingHistoryService {
                 try {
                     const history = await readingHistoryRepository.findById(id);
                     if (!history) {
-                        throw new NotFoundError("Reading history not found.");
+                        throw new notFoundError("Reading history not found.");
                     }
             // if (!user || (user.role !== "admin" && user.id !== history.userId)) {
              //   throw new ForbiddenError("You are not allowed to update this reading history.");
@@ -55,7 +55,7 @@ class ReadingHistoryService {
             
                     const updatedHistory = await readingHistoryRepository.update(id, data); // Fetch the updated history from the repository
                     if (!updatedHistory) {
-                        throw new NotFoundError("Failed to update reading history.");
+                        throw new notFoundError("Failed to update reading history.");
                     }
             
                     return updatedHistory; // Return the updated reading history object
@@ -69,7 +69,7 @@ class ReadingHistoryService {
         try {
             const history = await readingHistoryRepository.findById(id);
             if (!history) {
-                throw new NotFoundError("Reading history not found.");
+                throw new notFoundError("Reading history not found.");
             }
 
         //    if (!user || (user.role !== "admin" && user.id !== history.userId)) {
