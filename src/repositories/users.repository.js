@@ -4,8 +4,8 @@ class UsersRepository {
     async create(user) {
         const db = await connectToDatabase();
         const sql = `
-            INSERT INTO users (username, first_name, last_name, age, email, password_hash)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO users (username, first_name, last_name, age, email, password_hash,role)
+            VALUES (?, ?, ?, ?, ?, ?,?)
         `;
         const [result] = await db.execute(sql, [
             user.username,
@@ -13,7 +13,8 @@ class UsersRepository {
             user.last_name,
             user.age,
             user.email,
-            user.password_hash
+            user.password_hash,
+            user.role
         ]);
 
         return { id: result.insertId, ...user };

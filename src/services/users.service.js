@@ -2,6 +2,7 @@ import usersRepository from "../repositories/users.repository.js";
 import { NotFoundError, ForbiddenError, UnauthorizedError } from "../appError.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { roles } from "../../roles.js";
 
 class UsersService {
     async createUser(userData) {
@@ -11,6 +12,7 @@ class UsersService {
           const userToSave = {
             ...userData,
             password_hash: hashedPassword,
+            role: userData.role || 'user',
           };
           return await usersRepository.create(userToSave);
         } catch (error) {
@@ -28,13 +30,19 @@ class UsersService {
         }
     }
 
-    async getUserById(id) {
+    async getUserById(id,currentUser) {
         try {
             const user = await usersRepository.findById(id);
             if (!user) {
                 throw new NotFoundError("User not found");
             }
-            return user;
+            if (currentUser.id !== Number(id) && currentUser.role !== roles.ADMIN) {
+                throw new ForbiddenError("You are not authorized to view this profile.");
+              }
+              const { password_hash, ...safeUser } = user;
+
+              return safeUser;
+
         } catch (error) {
             console.error("Error in getUserById:", error);
             throw error;
@@ -48,9 +56,10 @@ class UsersService {
                 throw new NotFoundError("User not found");
             }
 
-           // if (currentUser?.id !== id && !currentUser?.isAdmin) {
-               // throw new ForbiddenError("You are not allowed to update this user");
-         //   }
+            if (currentUser?.id !== Number(id) && currentUser?.role !== roles.ADMIN) {
+                throw new ForbiddenError("You are not allowed to update this user");
+              }
+              
 
             if (userData.name) {
                 userData.name = this.capitalizeName(userData.name);
@@ -75,9 +84,10 @@ class UsersService {
                 throw new NotFoundError("User not found");
             }
 
-           // if (currentUser?.id !== id && !currentUser?.isAdmin) {
-             //   throw new ForbiddenError("You are not allowed to delete this user");
-            //}
+            if (currentUser?.id !== Number(id) && currentUser?.role !== roles.ADMIN) {
+                throw new ForbiddenError("You are not allowed to delete this user");
+              }
+              
 
             return await usersRepository.delete(id);
         } catch (error) {
@@ -90,9 +100,9 @@ class UsersService {
         return name.charAt(0).toUpperCase() + name.slice(1);
     }
     async loginUser(email, password) {
-        const users = await usersRepository.findAll(); // or implement findByEmail
+        const users = await usersRepository.findAll(); 
         const user = users.find(u => u.email === email);
-    
+        
         if (!user) {
           throw new UnauthorizedError("Invalid email or password");
         }
@@ -102,7 +112,7 @@ class UsersService {
           throw new UnauthorizedError("Invalid email or password");
         }
     
-        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id, email: user.email,role: user.role.toLowerCase() || 'user'}, JWT_SECRET, { expiresIn: "1h" });
     
         return {
           message: "Login successful",
