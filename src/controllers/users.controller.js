@@ -1,23 +1,34 @@
 import userService from "../services/users.service.js";
 
 class UsersController {
-
   async loginUser(req, res) {
     try {
       const { email, password } = req.body;
-      const result = await userService.loginUser(email, password);
-      console.log("Login route hit!");
-      res.status(200).json(result);
+      const { accessToken, refreshToken, user } = await userService.loginUser(email, password);
 
+      res
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "Strict",
+          maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        })
+        .status(200)
+        .json({
+          message: "Login successful",
+          accessToken,
+          user
+        });
     } catch (error) {
+      console.error("Login error:", error);
       res.status(error.statusCode || 401).json({ error: error.message });
     }
   }
-  
+
   async createUser(req, res) {
     try {
-      const user = await userService.createUser(req.body);
-      res.status(201).json(user);
+      const newUser = await userService.createUser(req.body);
+      res.status(201).json(newUser);
     } catch (error) {
       res.status(error.statusCode || 400).json({ error: error.message });
     }
@@ -34,9 +45,7 @@ class UsersController {
 
   async getUserById(req, res) {
     try {
-      const userId = req.params.id;
-      const currentUser = req.user; 
-      const user = await userService.getUserById(userId, currentUser);
+      const user = await userService.getUserById(req.params.id, req.user);
       res.json(user);
     } catch (error) {
       res.status(error.statusCode || 500).json({ error: error.message });
@@ -45,20 +54,15 @@ class UsersController {
 
   async updateUser(req, res) {
     try {
-      const updatedUser = await userService.updateUser(
-        req.params.id,
-        req.body,
-        req.user
-      );
-
-      if (updatedUser) {
-        res.json({
-          message: "User updated successfully",
-          user: updatedUser,
-        });
-      } else {
-        res.status(400).json({ error: "Failed to update user" });
+      const updatedUser = await userService.updateUser(req.params.id, req.body, req.user);
+      if (!updatedUser) {
+        return res.status(400).json({ error: "Failed to update user" });
       }
+
+      res.json({
+        message: "User updated successfully",
+        user: updatedUser
+      });
     } catch (error) {
       res.status(error.statusCode || 500).json({ error: error.message });
     }
@@ -66,7 +70,7 @@ class UsersController {
 
   async deleteUser(req, res) {
     try {
-      const deletedUser = await userService.deleteUser(req.params.id, req.user);
+      await userService.deleteUser(req.params.id, req.user);
       res.json({ message: "User deleted successfully" });
     } catch (error) {
       res.status(error.statusCode || 500).json({ error: error.message });
