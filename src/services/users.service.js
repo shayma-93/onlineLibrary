@@ -68,7 +68,7 @@ class UsersService {
             const updated = await usersRepository.update(id, userData);
 
             if (updated) {
-                return await usersRepository.findById(id); // return updated user object
+                return await usersRepository.findById(id); 
             }
             return null;
                     } catch (error) {
@@ -100,30 +100,48 @@ class UsersService {
         return name.charAt(0).toUpperCase() + name.slice(1);
     }
     async loginUser(email, password) {
-        const users = await usersRepository.findAll(); 
-        const user = users.find(u => u.email === email);
-        
-        if (!user) {
-          throw new UnauthorizedError("Invalid email or password");
-        }
+      const users = await usersRepository.findAll();
+      const user = users.find(u => u.email === email);
     
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) {
-          throw new UnauthorizedError("Invalid email or password");
-        }
-    
-        const token = jwt.sign({ id: user.id, email: user.email,role: user.role.toLowerCase() || 'user'}, JWT_SECRET, { expiresIn: "1h" });
-    
-        return {
-          message: "Login successful",
-          token,
-          user: {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-          },
-        };
+      if (!user) {
+        throw new UnauthorizedError("Invalid email or password");
       }
-}
+    
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      if (!isMatch) {
+        throw new UnauthorizedError("Invalid email or password");
+      }
+    
+      const JWT_SECRET = process.env.JWT_SECRET || "my_secret_key_12345";
+      const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || "my_refresh_secret_key_54321";
+    
+      const accessToken = jwt.sign(
+        {
+          id: user.id,
+          email: user.email,
+          role: user.role?.toLowerCase() || "user"
+        },
+        JWT_SECRET,
+        { expiresIn: "2h" }
+      );
+    
+      const refreshToken = jwt.sign(
+        { id: user.id },
+        REFRESH_TOKEN_SECRET,
+        { expiresIn: "7d" }
+      );
+    
+      const { password_hash, ...safeUser } = user;
+    
+      return {
+        message: "Login successful",
+        accessToken,
+        refreshToken,
+        user: safeUser
+      };
+    }
+    
+  
+      }
 
 export default new UsersService();

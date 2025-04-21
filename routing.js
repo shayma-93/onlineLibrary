@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+
 import booksRoutes from "./src/routes/books.route.js";
 import usersRoutes from "./src/routes/users.route.js";
 import bookShelvesRoutes from "./src/routes/bookShelves.route.js";
@@ -7,16 +9,15 @@ import libraryCardRoutes from "./src/routes/libraryCard.route.js";
 import readingHistoryRoutes from "./src/routes/readingHistory.route.js";
 
 const app = express();
-app.use((req, res, next) => {
-  if ((req.method === 'GET' || req.method === 'DELETE') && req.headers['content-type'] === 'application/json') {
-      delete req.headers['content-type']; 
-  }
-  next();
-});
-
-app.use(express.json()); 
 
 app.use(cors());
+app.use(cookieParser());
+app.use(express.json());
+
+app.use((req, res, next) => {
+  console.log("Global middleware hit. res.cookie?", typeof res.cookie);
+  next();
+});
 
 app.use("/api/books", booksRoutes);
 app.use("/api/users", usersRoutes);
@@ -30,13 +31,7 @@ app.get("/", (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err);
-
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-
-  res.status(statusCode).json({
-      error: message,
-  });
+  res.status(err.statusCode || 500).json({ error: err.message || "Internal Server Error" });
 });
 
 export default app;

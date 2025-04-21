@@ -3,6 +3,7 @@ import { UnauthorizedError } from "./appError.js"
 
 const JWT_SECRET = "my_secret_key_12345";
 
+
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -11,12 +12,12 @@ const authMiddleware = (req, res, next) => {
   }
 
   const token = authHeader.split(" ")[1];
-  console.log("JWT_SECRET:", JWT_SECRET); 
-  try {
+    try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded; 
     next();
   } catch (error) {
+    console.error("JWT verification error:", error);
     throw new UnauthorizedError("Invalid or expired token");
   }
 };
