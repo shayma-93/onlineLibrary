@@ -34,7 +34,9 @@ class UsersController {
 
   async getUserById(req, res) {
     try {
-      const user = await userService.getUserById(req.params.id);
+      const userId = req.params.id;
+      const currentUser = req.user; 
+      const user = await userService.getUserById(userId, currentUser);
       res.json(user);
     } catch (error) {
       res.status(error.statusCode || 500).json({ error: error.message });

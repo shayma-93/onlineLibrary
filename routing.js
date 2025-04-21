@@ -9,7 +9,7 @@ import readingHistoryRoutes from "./src/routes/readingHistory.route.js";
 const app = express();
 app.use((req, res, next) => {
   if ((req.method === 'GET' || req.method === 'DELETE') && req.headers['content-type'] === 'application/json') {
-      delete req.headers['content-type']; // Prevent express.json() from trying to parse
+      delete req.headers['content-type']; 
   }
   next();
 });
