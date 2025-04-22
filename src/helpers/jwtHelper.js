@@ -35,6 +35,11 @@ export const verifyAccessToken = (token) => {
     throw new Error('Invalid or expired access token');
   }
 };
+/*{
+use for token
+"email": "testuser@example.com",
+"password": "TestPass123!"
+}*/
 
 export const verifyRefreshToken = (token) => {
   const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'my_refresh_secret_key_54321';

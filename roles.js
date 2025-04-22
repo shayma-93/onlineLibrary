@@ -1,4 +1,4 @@
-import { forbiddenError, unauthorizedError } from "./src/Errors/appError.js"
+import { forbiddenError, unauthorizedError } from "./src/Errors/appError.js";
 
 export const roles = {
   ADMIN: "admin",
@@ -11,19 +11,24 @@ export const authorize = (allowedRoles = [], allowOwnProfile = false) => {
     const user = req.user;
 
     if (!user) {
-      throw new unauthorizedError("No user information found.");
+      return next(unauthorizedError("No user information found."));
     }
 
     const userRole = user.role?.toLowerCase();
+    const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
 
-    const normalizedAllowedRoles = allowedRoles.map((r) => r.toLowerCase());
+    const isRoleAllowed = normalizedAllowedRoles.includes(userRole);
+    const isOwner = allowOwnProfile && req.params.id == user.id;
 
-    if (!allowedRoles.includes(user.role) && !allowOwnProfile) {
-      if (req.params.id !== user.id) {
-        throw new forbiddenError("You are not authorized to view this profile.");
+    if (!(isRoleAllowed || isOwner)) {
+      if (!isRoleAllowed) {
+        return next(forbiddenError("You do not have permission to access this resource."));
+      }
+      if (!isOwner) {
+        return next(forbiddenError("You are not authorized to access this profile."));
       }
     }
 
     next();
   };
-}
+};

@@ -1,10 +1,10 @@
 import booksRepository from "../repositories/books.repository.js";
-import { notFoundError, forbiddenError, unauthorizedError } from "../Errors/appError.js";
+import { notFoundError, forbiddenError } from "../Errors/appError.js";
+import { checkAuthorization } from "../helpers/authHelper.js";
 
 class BooksService {
   async createBook(bookData) {
     try {
-    
       return await booksRepository.create(bookData);
     } catch (error) {
       console.error("Error in createBook:", error);
@@ -20,11 +20,12 @@ class BooksService {
       throw error;
     }
   }
+
   async getBookById(id) {
     try {
       const book = await booksRepository.findById(id);
       if (!book) {
-        throw new notFoundError("Book not found");
+        throw notFoundError("Book not found");
       }
       return book;
     } catch (error) {
@@ -33,12 +34,15 @@ class BooksService {
     }
   }
 
-  async deleteBook(id) {
+  async deleteBook(id, currentUser) {
     try {
       const book = await booksRepository.findById(id);
       if (!book) {
-        throw new notFoundError("Book not found");
+        throw notFoundError("Book not found");
       }
+
+      checkAuthorization(currentUser, book.owner_id);
+
       return await booksRepository.delete(id);
     } catch (error) {
       console.error("Error in deleteBook:", error);
@@ -46,19 +50,21 @@ class BooksService {
     }
   }
 
-  async updateBook(id, data) {
-    const book = await booksRepository.findById(id);
-    if (!book) {
-        throw new notFoundError("Book not found");
+  async updateBook(id, data, currentUser) {
+    try {
+      const book = await booksRepository.findById(id);
+      if (!book) {
+        throw notFoundError("Book not found");
+      }
+
+      checkAuthorization(currentUser, book.owner_id);
+
+      return await booksRepository.update(id, data);
+    } catch (error) {
+      console.error("Error in updateBook:", error);
+      throw error;
     }
-
-    if (data.forbiddenField) {
-        throw new forbiddenError("You are not allowed to update this field");
-    }
-
-    return await booksRepository.update(id, data); // This now returns the updated book
-}
-
+  }
 }
 
 export default new BooksService();
