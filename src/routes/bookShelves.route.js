@@ -1,12 +1,14 @@
 import express from "express";
 import bookShelvesController from "../controllers/bookShelves.controller.js";
+import authMiddleware from "../authMiddWare.js";
 
 const router = express.Router();
 
-router.post("/", bookShelvesController.createBookShelf);
-router.get("/", bookShelvesController.getAllBookShelves);
-router.get("/:id", bookShelvesController.getBookShelfById);
-router.put("/:id", bookShelvesController.updateBookShelf);
-router.delete("/:id", bookShelvesController.deleteBookShelf);
+router.post("/", authMiddleware, bookShelvesController.createBookShelf);
+router.get("/", authMiddleware, bookShelvesController.getAllBookShelves);
+router.get("/:id", authMiddleware, bookShelvesController.getBookShelvesById);
+router.get("/users/:userId/shelves", authMiddleware, bookShelvesController.getBookShelvesByUser);
+router.put("/:id", authMiddleware, bookShelvesController.updateBookShelf);
+router.delete("/:id", authMiddleware, bookShelvesController.deleteBookShelf);
 
 export default router;

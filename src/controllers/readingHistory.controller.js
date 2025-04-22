@@ -1,57 +1,62 @@
 import readingHistoryService from "../services/readingHistory.service.js";
+import { handleError, handleSuccess } from "../Errors/handleErrors.js";
+import { notFoundError } from "../Errors/appError.js";
+import { validateUser } from "../helpers/authHelper.js";
 
 class ReadingHistoryController {
-    async createReadingHistory(req, res, next) {
+    async createReadingHistory(req, res) {
+        if (!validateUser(req, res)) return;
+
         try {
             const readingHistory = await readingHistoryService.createReadingHistory(req.body, req.user);
-            res.status(201).json(readingHistory);
+            handleSuccess(res, readingHistory, "Reading history created successfully", 201);
         } catch (error) {
-            next(error); // pass error to Express error middleware
+            handleError(res, error);
         }
     }
 
-    async getAllReadingHistories(req, res, next) {
+    async getAllReadingHistories(req, res) {
         try {
             const readingHistories = await readingHistoryService.getAllReadingHistories();
-            res.json(readingHistories);
+            handleSuccess(res, readingHistories);
         } catch (error) {
-            next(error);
+            handleError(res, error);
         }
     }
 
-    async getReadingHistoryById(req, res, next) {
+    async getReadingHistoryById(req, res) {
         try {
             const readingHistory = await readingHistoryService.getReadingHistoryById(req.params.id);
-            res.json(readingHistory);
+            if (!readingHistory) {
+                throw notFoundError("Reading history not found");
+            }
+            handleSuccess(res, readingHistory);
         } catch (error) {
-            next(error);
+            handleError(res, error);
         }
     }
-    async updateReadingHistory(req, res, next) {
+
+    async updateReadingHistory(req, res) {
+        if (!validateUser(req, res)) return;
+
         try {
             const updatedHistory = await readingHistoryService.updateReadingHistory(req.params.id, req.body, req.user);
-    
-            if (updatedHistory) {
-                res.status(200).json({
-                    message: "Reading history updated successfully.",
-                    updatedReadingHistory: updatedHistory // Send the updated reading history as part of the response
-                });
-            } else {
-                res.status(404).json({ error: "Reading history not found or no changes were made." });
+            if (!updatedHistory) {
+                throw notFoundError("Reading history not found or no changes made");
             }
+            handleSuccess(res, updatedHistory, "Reading history updated successfully");
         } catch (error) {
-            next(error);  // Pass the error to the next middleware (Error handling)
+            handleError(res, error);
         }
     }
-    
-    
 
-    async deleteReadingHistory(req, res, next) {
+    async deleteReadingHistory(req, res) {
+        if (!validateUser(req, res)) return;
         try {
             await readingHistoryService.deleteReadingHistory(req.params.id, req.user);
-            res.json({ message: "Reading history deleted successfully" });
+            handleSuccess(res, null, "Reading history deleted successfully");
         } catch (error) {
-            next(error);
+            handleError(res, error);
         }
     }
 }

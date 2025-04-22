@@ -1,5 +1,6 @@
 import express from "express"
 import jwt from "jsonwebtoken";
+import { verifyRefreshToken } from "../helpers/jwtHelper.js";
 import usersController from "../controllers/users.controller.js"
 import authMiddleware from "../authMiddWare.js";
 import { authorize,roles } from "../../roles.js";
@@ -19,24 +20,22 @@ router.delete("/:id", authMiddleware, authorize([roles.ADMIN]), usersController.
 
 
 router.post("/refresh-token", (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-  
-  if (!refreshToken) {
+  console.log("Cookies:", req.cookies);
+
+  const token = req.cookies.refreshToken;
+
+  if (!token) {
     return res.status(401).json({ error: "No refresh token provided" });
   }
 
-  jwt.verify(refreshToken, REFRESH_TOKEN_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ error: "Invalid refresh token" });
-    }
+  try {
+    const decoded = verifyRefreshToken(token); 
+    const newAccessToken = generateAccessToken(decoded);
 
-    const newAccessToken = jwt.sign(
-      { id: decoded.id },
-      JWT_SECRET,
-      { expiresIn: "2h" }
-    );
-
-    res.json({ token: newAccessToken });
-  });
+    res.json({ accessToken: newAccessToken });
+  } catch (err) {
+    console.error("Refresh token error:", err);
+    res.status(403).json({ error: "Invalid or expired refresh token" });
+  }
 });
 export default router;

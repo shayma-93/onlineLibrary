@@ -8,17 +8,19 @@ const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new unauthorizedError("Missing or invalid token");
+    throw unauthorizedError("Missing or invalid token");
   }
 
   const token = authHeader.split(" ")[1];
     try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded; 
+    console.log(req.user);
+
     next();
   } catch (error) {
     console.error("JWT verification error:", error);
-    throw new unauthorizedError("Invalid or expired token");
+    throw  unauthorizedError("Invalid or expired token");
   }
 };
 

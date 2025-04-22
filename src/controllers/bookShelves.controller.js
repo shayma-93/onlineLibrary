@@ -1,69 +1,90 @@
 import bookShelvesService from "../services/bookShelves.service.js";
-import { notFoundError, forbiddenError } from "../Errors/appError.js";  
+import { notFoundError, forbiddenError, badRequestError } from "../Errors/appError.js";
+import { handleError, handleSuccess } from "../Errors/handleErrors.js";
+import { validateRequiredFields, validateUser } from  "../helpers/authHelper.js"
 
 class BookShelvesController {
     async createBookShelf(req, res) {
+        const validationError = validateRequiredFields(req.body, ["user_id", "book_id", "shelf_name"]);
+        if (validationError) {
+            return handleError(res, badRequestError(validationError.error));
+        }
+
+        if (!validateUser(req, res)) return;
+
         try {
             const bookShelf = await bookShelvesService.createBookShelves(req.body, req.user);
-            res.status(201).json(bookShelf);
+            handleSuccess(res, bookShelf, "Bookshelf created successfully", 201);
         } catch (error) {
-            res.status(error.statusCode || 500).json({ error: error.message });
+            handleError(res, error);
         }
     }
 
     async getAllBookShelves(req, res) {
         try {
-            const bookShelves = await bookShelvesService.getAllBookShelvess();
-            res.json(bookShelves);
+            const bookShelves = await bookShelvesService.getAllBookShelves();
+            handleSuccess(res, bookShelves);
         } catch (error) {
-            res.status(error.statusCode || 500).json({ error: error.message });
+            handleError(res, error);
         }
     }
 
-    async getBookShelfById(req, res) {
+    async getBookShelvesByUser(req, res) {
+        try {
+            const bookShelves = await bookShelvesService.getBookShelvesByUser(req.params.userId);
+            if (!bookShelves || bookShelves.length === 0) {
+                throw notFoundError("No bookshelves found for this user");
+            }
+            handleSuccess(res, bookShelves);
+        } catch (error) {
+            handleError(res, error);
+        }
+    }
+
+    async getBookShelvesById(req, res) {
         try {
             const bookShelf = await bookShelvesService.getBookShelvesById(req.params.id);
-            res.json(bookShelf);
+            if (!bookShelf) {
+                throw notFoundError("No bookshelf found");
+            }
+            handleSuccess(res, bookShelf);
         } catch (error) {
-            res.status(error.statusCode || 500).json({ error: error.message });
+            handleError(res, error);
         }
     }
+
     async updateBookShelf(req, res) {
+    
+        if (!validateUser(req, res)) return;
+
         try {
-            console.log("🪵 Params ID:", req.params.id);
-            console.log("🪵 Request body:", req.body);
-    
-            const updatedBookShelf = await bookShelvesService.updateBookShelves(req.params.id, req.body);
-    
-            if (updatedBookShelf) {
-                res.json({
-                    message: "Bookshelf updated successfully",
-                    updatedBookShelf: updatedBookShelf,
-                });
-            } else {
-                res.status(400).json({ error: "Failed to update Bookshelf" });
+            const updatedBookShelf = await bookShelvesService.updateBookShelves(
+                req.params.id,
+                req.body,
+                req.user
+            );
+
+            if (!updatedBookShelf) {
+                throw notFoundError("Bookshelf not found or update failed");
             }
+
+            handleSuccess(res, updatedBookShelf, "Bookshelf updated successfully");
         } catch (error) {
-            console.error("❌ Error in controller:", error);
-    
-            if (error instanceof NotFoundError) {
-                res.status(404).json({ error: error.message });
-            } else if (error instanceof ForbiddenError) {
-                res.status(403).json({ error: error.message });
-            } else {
-                res.status(500).json({ error: "An unexpected error occurred" });
-            }
+            handleError(res, error);
         }
     }
-    
-    
 
     async deleteBookShelf(req, res) {
+        if (!validateUser(req, res)) return;
+
         try {
-            await bookShelvesService.deleteBookShelves(req.params.id);
-            res.json({ message: "BookShelf deleted successfully" });
+            const deleted = await bookShelvesService.deleteBookShelves(req.params.id, req.user);
+            if (!deleted) {
+                throw notFoundError("Bookshelf not found or delete failed");
+            }
+            handleSuccess(res, null, "Bookshelf deleted successfully");
         } catch (error) {
-            res.status(error.statusCode || 500).json({ error: error.message });
+            handleError(res, error);
         }
     }
 }

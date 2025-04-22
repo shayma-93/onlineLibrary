@@ -1,48 +1,71 @@
 import libraryCardService from "../services/libraryCard.service.js";
+import { notFoundError, forbiddenError, badRequestError } from "../Errors/appError.js";
+import { handleError, handleSuccess } from "../Errors/handleErrors.js";
+import { validateRequiredFields, validateUser } from "../helpers/authHelper.js";
 
 class LibraryCardController {
     async createLibraryCard(req, res) {
+        const validationError = validateRequiredFields(req.body, ["user_id"]);
+        if (validationError) {
+            return handleError(res, badRequestError(validationError.error));
+        }
+
+        if (!validateUser(req, res)) return;
+
         try {
-            const libraryCard = await libraryCardService.createLibraryCard(req.body, req.user); // Pass user
-            res.status(201).json(libraryCard);
+            const libraryCard = await libraryCardService.createLibraryCard(req.body, req.user);
+            handleSuccess(res, libraryCard, "Library card created successfully", 201);
         } catch (error) {
-            res.status(error.statusCode || 400).json({ error: error.message });
+            handleError(res, error);
         }
     }
 
     async getAllLibraryCards(req, res) {
         try {
             const libraryCards = await libraryCardService.getAllLibraryCards();
-            res.json(libraryCards);
+            handleSuccess(res, libraryCards);
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            handleError(res, error);
         }
     }
 
     async getLibraryCardById(req, res) {
         try {
-            const libraryCard = await libraryCardService.getLibraryCardById(req.params.id);
-            res.json(libraryCard);
+          const card = await libraryCardService.getLibraryCardById(req.params.id, req.user);
+          handleSuccess(res, card);
         } catch (error) {
-            res.status(error.statusCode || 500).json({ error: error.message });
+          handleError(res, error);
         }
-    }
+      }
+      
 
     async updateLibraryCard(req, res) {
+     
+
+        if (!validateUser(req, res)) return;
+
         try {
-            const updatedLibraryCard = await libraryCardService.updateLibraryCard(req.params.id, req.body, req.user); // Pass user
-            res.json(updatedLibraryCard);
+            const updatedLibraryCard = await libraryCardService.updateLibraryCard(req.params.id, req.body, req.user);
+            if (!updatedLibraryCard) {
+                throw notFoundError("Library card not found or update failed");
+            }
+            handleSuccess(res, updatedLibraryCard, "Library card updated successfully");
         } catch (error) {
-            res.status(error.statusCode || 500).json({ error: error.message });
+            handleError(res, error);
         }
     }
 
     async deleteLibraryCard(req, res) {
+        if (!validateUser(req, res)) return;
+
         try {
-            const deletedLibraryCard = await libraryCardService.deleteLibraryCard(req.params.id, req.user); // Pass user
-            res.json({ message: "Library card deleted successfully" });
+            const deleted = await libraryCardService.deleteLibraryCard(req.params.id, req.user);
+            if (!deleted) {
+                throw notFoundError("Library card not found or delete failed");
+            }
+            handleSuccess(res, null, "Library card deleted successfully");
         } catch (error) {
-            res.status(error.statusCode || 500).json({ error: error.message });
+            handleError(res, error);
         }
     }
 }

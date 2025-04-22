@@ -1,6 +1,10 @@
 import userService from "../services/users.service.js";
+import { handleError, handleSuccess } from "../Errors/handleErrors.js";
+import { validateRequiredFields } from "../helpers/authHelper.js";
+import { notFoundError, badRequestError } from "../Errors/appError.js";
 
 class UsersController {
+  // Login a user
   async loginUser(req, res) {
     try {
       const { email, password } = req.body;
@@ -20,60 +24,72 @@ class UsersController {
           user
         });
     } catch (error) {
-      console.error("Login error:", error);
-      res.status(error.statusCode || 401).json({ error: error.message });
+      handleError(res, error);
     }
   }
 
+  // Create a new user
   async createUser(req, res) {
+    const validation = validateRequiredFields(req.body, ["username", "first_name", "last_name", "age", "email", "password"]);
+    
+    if (validation?.error) {
+      return handleError(res, badRequestError(validation.error));
+    }
+
     try {
       const newUser = await userService.createUser(req.body);
-      res.status(201).json(newUser);
+      handleSuccess(res, newUser, "User created successfully", 201);
     } catch (error) {
-      res.status(error.statusCode || 400).json({ error: error.message });
+      handleError(res, error);
     }
   }
 
+  // Get all users
   async getAllUsers(req, res) {
     try {
       const users = await userService.getAllUsers();
-      res.json(users);
+      handleSuccess(res, users);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ error: error.message });
+      handleError(res, error);
     }
   }
 
+  // Get a user by ID
   async getUserById(req, res) {
     try {
       const user = await userService.getUserById(req.params.id, req.user);
-      res.json(user);
+      if (!user) {
+        throw notFoundError("User not found");
+      }
+      handleSuccess(res, user);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ error: error.message });
+      handleError(res, error);
     }
   }
 
+  // Update user information
   async updateUser(req, res) {
     try {
       const updatedUser = await userService.updateUser(req.params.id, req.body, req.user);
       if (!updatedUser) {
-        return res.status(400).json({ error: "Failed to update user" });
+        return handleError(res, notFoundError("Failed to update user"));
       }
-
-      res.json({
-        message: "User updated successfully",
-        user: updatedUser
-      });
+      handleSuccess(res, updatedUser, "User updated successfully");
     } catch (error) {
-      res.status(error.statusCode || 500).json({ error: error.message });
+      handleError(res, error);
     }
   }
 
+  // Delete a user
   async deleteUser(req, res) {
     try {
-      await userService.deleteUser(req.params.id, req.user);
-      res.json({ message: "User deleted successfully" });
+      const deleted = await userService.deleteUser(req.params.id, req.user);
+      if (!deleted) {
+        throw notFoundError("User not found or delete failed");
+      }
+      handleSuccess(res, null, "User deleted successfully");
     } catch (error) {
-      res.status(error.statusCode || 500).json({ error: error.message });
+      handleError(res, error);
     }
   }
 }

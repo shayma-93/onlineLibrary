@@ -1,87 +1,58 @@
 import bookShelvesRepository from "../repositories/bookShelves.repository.js";
-import { notFoundError, forbiddenError, unauthorizedError } from "../Errors/appError.js";
+import { notFoundError } from "../Errors/appError.js";
+import { checkAuthorization, validateRequiredFields } from "../helpers/authHelper.js";
+import { capitalizeWords } from "../helpers/stringHelper.js";
+import { pool } from "../../db.js";
 
 class BookShelvesService {
-    async createBookShelves(bookShelvesData, user) {
-        try {
-           /* if (!user || !user.isAdmin) {
-                throw new UnauthorizedError("Only admins can create bookshelves.");
-            }*/
-            return await bookShelvesRepository.create(bookShelvesData);
-        } catch (error) {
-            console.error("Error in createBookShelves:", error);
-            throw error;
-        }
+  async createBookShelves(data, user) {
+    if (user.id !== data.user_id) {
+      throw notFoundError("You can only create bookshelves for yourself.");
     }
 
-    async getAllBookShelvess() {
-        try {
-            return await bookShelvesRepository.findAll();
-        } catch (error) {
-            console.error("Error in getAllBookShelvess:", error);
-            throw error;
-        }
+    const error = validateRequiredFields(data, ["user_id", "book_id", "shelf_name"]);
+    if (error) throw error;
+
+    data.shelf_name = capitalizeWords(data.shelf_name);
+    return await bookShelvesRepository.create(data);
+  }
+ 
+  async getAllBookShelves() {
+    const sql = `SELECT * FROM bookshelves`;  
+    const [rows] = await pool.execute(sql);
+    return rows;
+  }
+  async getBookShelvesById(id) {
+    const shelf = await bookShelvesRepository.findById(id);
+    if (!shelf) throw notFoundError("Bookshelf not found");
+    return shelf;
+  }
+
+  async getBookShelvesByUser(userId) {
+    const shelves = await bookShelvesRepository.findByUserId(userId);
+    if (!shelves?.length) throw notFoundError("No bookshelves found for this user");
+    return shelves;
+  }
+
+  async updateBookShelves(id, data, user) {
+    const shelf = await this.getBookShelvesById(id);
+
+    checkAuthorization(user, shelf.user_id); 
+
+    if (data.shelf_name) {
+      data.shelf_name = capitalizeWords(data.shelf_name);
     }
 
-    async getBookShelvesById(id) {
-        try {
-            const shelf = await bookShelvesRepository.findById(id);
-            if (!shelf) {
-                throw new notFoundError("Bookshelf not found");
-            }
-            return shelf;
-        } catch (error) {
-            console.error("Error in getBookShelvesById:", error);
-            throw error;
-        }
-    }async updateBookShelves(id, bookShelvesData) {
-        try {
-            if (!bookShelvesData || typeof bookShelvesData !== 'object') {
-                console.error("🚫 Invalid bookShelvesData:", bookShelvesData);
-                throw new Error("No data provided to update bookshelf");
-            }
-    
-            const shelf = await bookShelvesRepository.findById(id);
-            if (!shelf) {
-                throw new notFoundError("Bookshelf not found");
-            }
-    
-            // Optional capitalization
-            if (bookShelvesData.shelf_name) {
-                bookShelvesData.shelf_name = this.capitalizeName(bookShelvesData.shelf_name);
-            }
-    
-            const updated = await bookShelvesRepository.update(id, bookShelvesData);
-    
-            if (updated) {
-                return await bookShelvesRepository.findById(id);
-            }
-    
-            return null;
-        } catch (error) {
-            console.error("❌ Error in updateBookShelves:", error);
-            throw error;
-        }
-    }
-    
-    
+    await bookShelvesRepository.update(id, data);
+    return await this.getBookShelvesById(id); 
+  }
 
-    async deleteBookShelves(id) {
-        try {
-            const shelf = await bookShelvesRepository.findById(id);
-            if (!shelf) {
-                throw new notFoundError("Bookshelf not found");
-            }
-            return await bookShelvesRepository.delete(id);
-        } catch (error) {
-            console.error("Error in deleteBookShelves:", error);
-            throw error;
-        }
-    }
+  async deleteBookShelves(id, user) {
+    const shelf = await this.getBookShelvesById(id); 
 
-    capitalizeName(name) {
-        return name.charAt(0).toUpperCase() + name.slice(1);
-    }
+    checkAuthorization(user, shelf.user_id); 
+    return await bookShelvesRepository.delete(id);
+  }
 }
 
 export default new BookShelvesService();
