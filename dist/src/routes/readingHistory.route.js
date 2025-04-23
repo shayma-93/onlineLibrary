@@ -1,0 +1,13 @@
+import express from "express"
+import readingHistoryController from "../controllers/readingHistory.controller.js"
+import authMiddleware from "../authMiddWare.js"
+
+const router = express.Router();
+
+router.post("/",authMiddleware, readingHistoryController.createReadingHistory);
+router.get("/", authMiddleware, readingHistoryController.getAllReadingHistories);
+router.get("/:id", authMiddleware, readingHistoryController.getReadingHistoryById);
+router.put("/:id", authMiddleware, readingHistoryController.updateReadingHistory);
+router.delete("/:id",authMiddleware,  readingHistoryController.deleteReadingHistory);
+
+export default router;
