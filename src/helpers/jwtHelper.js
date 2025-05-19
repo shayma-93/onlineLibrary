@@ -11,7 +11,7 @@ export const generateAccessToken = (user) => {
       role: user.role?.toLowerCase() || 'user',
     },
     JWT_SECRET,
-    { expiresIn: '2h' } 
+    { expiresIn: '6h' } 
   );
 };
 

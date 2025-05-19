@@ -9,9 +9,14 @@ import readingHistoryRoutes from "./src/routes/readingHistory.route.js";
 
 const app = express();
 
+// Enable CORS for frontend (Next.js) running on localhost:3000
+app.use(cors({
+  origin: 'http://localhost:3000', // Allow frontend to make requests to backend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+}));
+
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
 
 app.use((req, res, next) => {
   console.log("Global middleware hit. res.cookie?", typeof res.cookie);

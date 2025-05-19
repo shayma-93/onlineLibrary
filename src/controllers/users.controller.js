@@ -48,6 +48,7 @@ class UsersController {
   async getAllUsers(req, res) {
     try {
       const users = await userService.getAllUsers();
+      console.log("Fetched Users from DB:", users); 
       handleSuccess(res, users);
     } catch (error) {
       handleError(res, error);
